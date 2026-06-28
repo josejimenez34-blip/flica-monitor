@@ -1,5 +1,19 @@
 {
-  "lastUpdated": "",
-  "agentVersion": "8.2",
-  "alerts": []
+  "lastUpdated": "2026-06-28T07:23:46.034Z",
+  "agentVersion": "7.8",
+  "alerts": [
+    {
+      "id": "S2N92A_20260628_0",
+      "number": "S2N92A",
+      "startDate": "06/28/2026",
+      "endDate": "06/28/2026",
+      "payHours": 6.93,
+      "days": 1,
+      "layover": "Turn",
+      "premium": true,
+      "score": 75,
+      "pickupUrl": "https://jetblue.flica.net/full/otadd.cgi?BCID=014.191&token=000000007F98011B01DD06CFDF3A1A95&PIDX=0",
+      "detectedAt": "2026-06-28T07:23:46.034Z"
+    }
+  ]
 }
