@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flica Monitor — Trip Alerts</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Flica Alerts">
+<link rel="apple-touch-icon" href="icon.png">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, sans-serif; background: #0f0f0f; color: #f0f0f0; padding: 16px; }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; color: #fff; }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 20px; }
+  .status-card { background: #1a1a1a; border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid #333; }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #1D9E75; display: inline-block; margin-right: 8px; animation: pulse 2s infinite; }
+  .status-dot.offline { background: #E24B4A; animation: none; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .trip-card { background: #1a1a1a; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #333; }
+  .trip-card.premium { border-color: #EF9F27; background: #1f1a0f; }
+  .trip-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 8px; }
+  .badge-premium { background: #FAEEDA; color: #633806; }
+  .badge-opentime { background: #E6F1FB; color: #0C447C; }
+  .trip-number { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .trip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .trip-field label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; display: block; }
+  .trip-field span { font-size: 14px; font-weight: 500; }
+  .pickup-btn { display: block; width: 100%; padding: 14px; background: #534AB7; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; margin-top: 4px; }
+  .pickup-btn:active { background: #3C3489; }
+  .empty { text-align: center; padding: 40px 20px; color: #555; }
+  .enable-btn { display: block; width: 100%; padding: 14px; background: #1D9E75; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 12px; }
+  .time-tag { font-size: 11px; color: #666; margin-top: 8px; }
+  #install-banner { background: #534AB7; border-radius: 12px; padding: 14px; margin-bottom: 16px; font-size: 13px; display: none; }
+</style>
+</head>
+<body>
+
+<h1>Flica Monitor</h1>
+<p class="subtitle">JetBlue Open Time Alerts — SJU CA</p>
+
+<div id="install-banner">
+  📱 <b>Add to Home Screen</b> for instant push notifications — tap Share → Add to Home Screen
+</div>
+
+<div class="status-card">
+  <span class="status-dot" id="status-dot"></span>
+  <span id="status-text">Connecting...</span>
+  <div class="time-tag" id="last-update">Last update: never</div>
+</div>
+
+<button class="enable-btn" id="enable-notif-btn">🔔 Enable Push Notifications</button>
+
+<div id="alerts-container">
+  <div class="empty">Waiting for trips...<br><br>The agent will push alerts here when open time is found.</div>
+</div>
+
+<script>
+const CHANNEL_KEY = "flica_sju_ca_alerts"; // Unique channel for your alerts
+
+// Check if running as installed PWA
+var isStandalone = window.navigator.standalone || window.matchMedia("(display-mode: standalone)").matches;
+if (!isStandalone && /iPhone|iPad/.test(navigator.userAgent)) {
+  document.getElementById("install-banner").style.display = "block";
+}
+
+// Request notification permission
+document.getElementById("enable-notif-btn").addEventListener("click", async function() {
+  if (!("Notification" in window)) {
+    alert("Notifications not supported on this browser. Add to Home Screen first.");
+    return;
+  }
+  var perm = await Notification.requestPermission();
+  if (perm === "granted") {
+    this.textContent = "Notifications Enabled!";
+    this.style.background = "#1D9E75";
+    localStorage.setItem("notifEnabled", "true");
+    showNotification("Flica Monitor", "Push notifications are now active!", false);
+  } else {
+    alert("Please allow notifications to receive trip alerts.");
+  }
+});
+
+if (localStorage.getItem("notifEnabled") === "true") {
+  document.getElementById("enable-notif-btn").textContent = "Notifications Enabled!";
+  document.getElementById("enable-notif-btn").style.background = "#1D9E75";
+}
+
+function showNotification(title, body, isPremium) {
+  if (Notification.permission === "granted") {
+    new Notification(title, {
+      body: body,
+      icon: "icon.png",
+      badge: "icon.png",
+      tag: "flica-trip",
+      renotify: true,
+      requireInteraction: isPremium
+    });
+  }
+}
+
+function renderAlert(alert) {
+  var isPrem = alert.premium || false;
+  return [
+    '<div class="trip-card ' + (isPrem ? "premium" : "") + '">',
+      '<span class="trip-badge ' + (isPrem ? "badge-premium" : "badge-opentime") + '">' + (isPrem ? "PREMIUM" : "OPEN TIME") + '</span>',
+      '<div class="trip-number">Trip ' + (alert.number||"?") + '</div>',
+      '<div class="trip-grid">',
+        '<div class="trip-field"><label>Start</label><span>' + (alert.startDate||"?") + '</span></div>',
+        '<div class="trip-field"><label>End</label><span>' + (alert.endDate||"?") + '</span></div>',
+        '<div class="trip-field"><label>Pay Hours</label><span>' + parseFloat(alert.payHours||0).toFixed(1) + '</span></div>',
+        '<div class="trip-field"><label>Days</label><span>' + (alert.days||1) + '</span></div>',
+        '<div class="trip-field"><label>Layover</label><span>' + (alert.layover||"?") + '</span></div>',
+        '<div class="trip-field"><label>Score</label><span>' + (alert.score||0) + '/100</span></div>',
+      '</div>',
+      '<div class="time-tag">Detected: ' + new Date(alert.detectedAt||Date.now()).toLocaleTimeString() + '</div>',
+      '<a class="pickup-btn" href="' + (alert.pickupUrl||"https://jetblue.flica.net") + '" target="_blank">TAP TO PICK UP</a>',
+    '</div>'
+  ].join("");
+}
+
+// Poll for new alerts using a simple JSON file updated by the extension
+async function pollAlerts() {
+  try {
+    // Fetch the alerts JSON file with cache-busting
+    var r = await fetch("alerts.json?t=" + Date.now());
+    if (!r.ok) throw new Error("No alerts file");
+    var data = await r.json();
+
+    document.getElementById("status-dot").className = "status-dot";
+    document.getElementById("status-text").textContent = "Agent active — scanning for trips";
+    document.getElementById("last-update").textContent = "Last update: " + new Date().toLocaleTimeString();
+
+    var container = document.getElementById("alerts-container");
+    var stored    = JSON.parse(localStorage.getItem("shownAlerts") || "[]");
+
+    if (data.alerts && data.alerts.length > 0) {
+      // Show new alerts as notifications
+      data.alerts.forEach(function(alert) {
+        if (!stored.includes(alert.id)) {
+          stored.push(alert.id);
+          var title = (alert.premium ? "PREMIUM — " : "") + "Trip " + alert.number + " in Open Time!";
+          var body  = alert.startDate + " to " + alert.endDate + " | " + parseFloat(alert.payHours||0).toFixed(1) + " hrs | " + (alert.layover||"?");
+          showNotification(title, body, alert.premium);
+        }
+      });
+
+      localStorage.setItem("shownAlerts", JSON.stringify(stored.slice(-50)));
+      container.innerHTML = data.alerts.map(renderAlert).join("");
+    } else {
+      container.innerHTML = '<div class="empty">Agent is watching...<br><br>No trips in open time right now.</div>';
+    }
+  } catch(e) {
+    document.getElementById("status-dot").className = "status-dot offline";
+    document.getElementById("status-text").textContent = "Agent offline or no trips yet";
+  }
+}
+
+// Poll every 10 seconds
+pollAlerts();
+setInterval(pollAlerts, 10000);
+</script>
+</body>
+</html>
