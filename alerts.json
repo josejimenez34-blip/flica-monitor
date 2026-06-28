@@ -1,19 +1,32 @@
 {
-  "lastUpdated": "2026-06-28T07:23:46.034Z",
+  "lastUpdated": "2026-06-28T07:35:45.158Z",
   "agentVersion": "7.8",
   "alerts": [
     {
-      "id": "S2N92A_20260628_0",
-      "number": "S2N92A",
+      "id": "S2O01_20260628_1",
+      "number": "S2O01",
       "startDate": "06/28/2026",
-      "endDate": "06/28/2026",
-      "payHours": 6.93,
+      "endDate": "06/29/2026",
+      "payHours": 10,
+      "days": 2,
+      "layover": "SDQ",
+      "premium": false,
+      "score": 35,
+      "pickupUrl": "https://jetblue.flica.net/full/otadd.cgi?BCID=014.191&token=000000007F98011B01DD06D06B4D964F&PIDX=1",
+      "detectedAt": "2026-06-28T07:35:45.157Z"
+    },
+    {
       "days": 1,
+      "detectedAt": "2026-06-28T07:23:46.034Z",
+      "endDate": "06/28/2026",
+      "id": "S2N92A_20260628_0",
       "layover": "Turn",
+      "number": "S2N92A",
+      "payHours": 6.93,
+      "pickupUrl": "https://jetblue.flica.net/full/otadd.cgi?BCID=014.191&token=000000007F98011B01DD06CFDF3A1A95&PIDX=0",
       "premium": true,
       "score": 75,
-      "pickupUrl": "https://jetblue.flica.net/full/otadd.cgi?BCID=014.191&token=000000007F98011B01DD06CFDF3A1A95&PIDX=0",
-      "detectedAt": "2026-06-28T07:23:46.034Z"
+      "startDate": "06/28/2026"
     }
   ]
 }
